@@ -84,9 +84,12 @@ def handle_packet(raw: bytes, addr):
 
         # Log motion event
         try:
-            ms = int(tstamp)
-            logging.info("Motion at '%s' (+%.2f s) dispatch ON", station, ms/1000.0)
-        except:
+            if tstamp is not None:
+                ms = int(tstamp)
+                logging.info("Motion at '%s' (+%.2f s) dispatch ON", station, ms/1000.0)
+            else:
+                logging.info("Motion at '%s' (Time=%s) dispatch ON", station, tstamp)
+        except Exception:
             logging.info("Motion at '%s' (Time=%s) dispatch ON", station, tstamp)
 
         # send ON

@@ -87,6 +87,20 @@ void handleUDP() {
     cmd.trim();
     debugPrint("Serial " + cmd);
     Serial.println(cmd);
+
+    if (cmd == "PIR_ON") {
+      digitalWrite(RELAY_PIN, HIGH);
+      ackUDP("Relay ON");
+    } else if (cmd == "PIR_OFF") {
+      digitalWrite(RELAY_PIN, LOW);
+      ackUDP("Relay OFF");
+    } else if (cmd == "PIR_STATUS") {
+      ackUDP("Status: " + String(motionTriggered ? "ON" : "OFF"));
+    } else {
+      ackUDP("Unknown CMD: " + cmd);
+    }
+    debugPrint("Processed CMD: " + cmd);
+    
   } else if (msg.startsWith("PIR_INTERVAL:") ) { // Set the PIR interval
     String cmd = msg.substring(13);  // text after "PIR_INTERVAL:"
     cmd.trim();

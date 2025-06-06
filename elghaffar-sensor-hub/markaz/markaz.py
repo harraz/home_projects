@@ -21,7 +21,7 @@ STATION_CONFIG = {
         "off_cmd": "CLOSE_VALVE",
         "off_delay": 15,
     },
-    "HAGRASS": {
+    "HAGRRAS": {
         "ip": "192.168.1.0",
         "on_cmd": "",
         "off_cmd": "",

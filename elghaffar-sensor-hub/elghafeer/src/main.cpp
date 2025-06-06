@@ -88,13 +88,13 @@ void handleUDP() {
     debugPrint("Serial " + cmd);
     Serial.println(cmd);
 
-    if (cmd == "PIR_ON") {
+    if (cmd == "REL_ON") {
       digitalWrite(RELAY_PIN, HIGH);
       ackUDP("Relay ON");
-    } else if (cmd == "PIR_OFF") {
+    } else if (cmd == "REL_OFF") {
       digitalWrite(RELAY_PIN, LOW);
       ackUDP("Relay OFF");
-    } else if (cmd == "PIR_STATUS") {
+    } else if (cmd == "REL_STATUS") {
       ackUDP("Status: " + String(motionTriggered ? "ON" : "OFF"));
     } else {
       ackUDP("Unknown CMD: " + cmd);

@@ -10,9 +10,9 @@ ACTUATOR_PORT = 12345
 # PER-STATION CONFIG
 STATION_CONFIG = {
     "BASYOUNEE": {
-        "ip": "192.168.1.197",
-        "on_cmd": "OPEN_VALVE",
-        "off_cmd": "CLOSE_VALVE",
+        "ip": "192.168.1.151",
+        "on_cmd": "REL_ON",
+        "off_cmd": "REL_OFF",
         "off_delay": 15,
     },
     "ASHRAF": {
@@ -22,9 +22,9 @@ STATION_CONFIG = {
         "off_delay": 15,
     },
     "HAGRASS": {
-        "ip": "192.168.1.151",
-        "on_cmd": "REL_OFF",
-        "off_cmd": "REL_ON",
+        "ip": "192.168.1.0",
+        "on_cmd": "",
+        "off_cmd": "",
         "off_delay": 15,
     }
 }

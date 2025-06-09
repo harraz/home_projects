@@ -16,6 +16,10 @@ const unsigned int LOCAL_PORT    = 12345;
 const unsigned int TARGET_PORT   = 8080;
 unsigned long PIR_INTERVAL = 60000;   // ms
 
+unsigned long relayActivatedMillis = 0;
+const unsigned long RELAY_MAX_ON_DURATION = 120000; // 2 minutes
+
+
 #define DEBUG 0  // Set to 1 to enable debug prints
 
 // ——— Pins & State ————————————————————————————————————
@@ -90,6 +94,8 @@ void handleUDP() {
 
     if (cmd == "REL_ON") {
       digitalWrite(RELAY_PIN, HIGH);
+          relayActivatedMillis = millis();
+
       ackUDP("Relay ON");
     } else if (cmd == "REL_OFF") {
       digitalWrite(RELAY_PIN, LOW);
@@ -115,9 +121,11 @@ void handleUDP() {
 void handlePIR() {
   bool motion = (digitalRead(PIR_PIN) == HIGH);
 
+  // If motion is detected and relay is not ON, turn it ON and start the timer
   if (motion && !motionTriggered) {
     motionTriggered = true;
     digitalWrite(RELAY_PIN, HIGH);
+    relayActivatedMillis = millis();
     debugPrint("Motion ON");
     if (hasClientIP) {
       udp.beginPacket(lastClientIP, TARGET_PORT);
@@ -129,14 +137,35 @@ void handlePIR() {
     }
     Serial.println("ON");
   }
-  else if (!motion && motionTriggered) {
-    motionTriggered = false;
-    digitalWrite(RELAY_PIN, LOW);
-    debugPrint("Motion OFF");
-    Serial.println("OFF");
-  }
+  
+  // If relay is ON and (no more motion OR timer expired), turn it OFF
+  // if (motionTriggered) {
+  //   if (!motion || (millis() - relayActivatedMillis >= RELAY_MAX_ON_DURATION)) {
+  //     motionTriggered = false;
+  //     digitalWrite(RELAY_PIN, LOW);
+  //     relayActivatedMillis = 0; // Reset timer 
+  //     if (!motion) {
+  //       debugPrint("Motion OFF");
+  //       Serial.println("OFF");
+  //     } else {
+  //       debugPrint("Relay OFF (timer expired)");
+  //       Serial.println("OFF (timer)");
+  //     }
+  //   }
+  // }
 }
 
+void checkRelayTimeout() {
+  if (relayActivatedMillis > 0) {
+    if (millis() - relayActivatedMillis >= RELAY_MAX_ON_DURATION) {
+      motionTriggered = false;
+      digitalWrite(RELAY_PIN, LOW);
+      relayActivatedMillis = 0;
+      debugPrint("Relay OFF (timer expired)");
+      ackUDP("Relay OFF (timer expired)" + String(PIR_INTERVAL));
+    }
+  }
+}
 // Non-blocking Serial read, handle commands from Serial
 // This is a simple command parser, it will not handle complex commands
 // or arguments. It will only look for "ON", "OFF", and "STATUS" commands.
@@ -218,6 +247,9 @@ void loop() {
 
   handleSerial();  // always check for serial commands
   handleUDP();
+
+  checkRelayTimeout(); // check if the relay should be turned OFF due to timeout
+
   // handle PIR motion detection every PIR_INTERVAL milliseconds
   // This is a non-blocking check, it will not block the loop
   if (now - lastMillis >= PIR_INTERVAL) {

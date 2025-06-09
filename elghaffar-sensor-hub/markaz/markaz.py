@@ -106,7 +106,7 @@ def handle_packet(raw: bytes, addr):
         timer.start()
 
     else:  # ACK
-        logging.info("ACK received from '%s'", station)
+        logging.info("ACK msg '%s' received from '%s'", fields, station)
 
 
 def listener():

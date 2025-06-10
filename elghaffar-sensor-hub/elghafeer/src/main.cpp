@@ -101,9 +101,9 @@ void handleUDP() {
       digitalWrite(RELAY_PIN, LOW);
       ackUDP("Relay OFF");
     } else if (cmd == "REL_STATUS") {
-      ackUDP("Relay Status: " + String((digitalRead(RELAY_PIN) == HIGH) ? "ON" : "OFF"));
+      ackUDP("Relay Status:" + String((digitalRead(RELAY_PIN) == HIGH) ? "ON" : "OFF"));
     } else {
-      ackUDP("Unknown CMD: " + cmd);
+      ackUDP("Unknown CMD:" + cmd);
     }
     debugPrint("Processed CMD: " + cmd);
     
@@ -111,8 +111,8 @@ void handleUDP() {
     String cmd = msg.substring(13);  // text after "PIR_INTERVAL:"
     cmd.trim();
     PIR_INTERVAL = cmd.toInt();
-    ackUDP("PIR_INTERVAL set to: " + String(PIR_INTERVAL));
-    debugPrint("PIR_INTERVAL set to: " + String(PIR_INTERVAL));
+    ackUDP("PIR_INTERVAL_set:" + String(PIR_INTERVAL));
+    debugPrint("PIR_INTERVAL_set: " + String(PIR_INTERVAL));
   } else {
     debugPrint("Unknown UDP command: " + msg);
   }
@@ -161,7 +161,7 @@ void checkRelayTimeout() {
       // motionTriggered = false;
       digitalWrite(RELAY_PIN, LOW);
       relayActivatedMillis = 0;
-      debugPrint("Relay OFF (timer expired)");
+      debugPrint("Relay_OFF_(timer expired)");
       ackUDP("Relay OFF (timer expired)" + String(PIR_INTERVAL));
     }
   }

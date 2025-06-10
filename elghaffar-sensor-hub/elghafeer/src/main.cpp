@@ -83,7 +83,7 @@ void handleUDP() {
   String msg(buf);
   msg.trim();
   debugPrint("UDP from " + lastClientIP.toString() + ": " + msg);
-  ackUDP(msg);
+  // ackUDP(msg);
 
   // If this is a command, forward the payload to Serial
   if (msg.startsWith("CMD:")) {
@@ -94,16 +94,16 @@ void handleUDP() {
 
     if (cmd == "REL_ON") {
       digitalWrite(RELAY_PIN, HIGH);
-          relayActivatedMillis = millis();
+      relayActivatedMillis = millis();
 
-      ackUDP("Relay ON");
+      ackUDP("Relay_ON");
     } else if (cmd == "REL_OFF") {
       digitalWrite(RELAY_PIN, LOW);
-      ackUDP("Relay OFF");
+      ackUDP("Relay_OFF");
     } else if (cmd == "REL_STATUS") {
-      ackUDP("Relay Status:" + String((digitalRead(RELAY_PIN) == HIGH) ? "ON" : "OFF"));
+      ackUDP("Relay_Status:" + String((digitalRead(RELAY_PIN) == HIGH) ? "ON" : "OFF"));
     } else {
-      ackUDP("Unknown CMD:" + cmd);
+      ackUDP("Unknown_CMD:" + cmd);
     }
     debugPrint("Processed CMD: " + cmd);
     
@@ -161,8 +161,8 @@ void checkRelayTimeout() {
       // motionTriggered = false;
       digitalWrite(RELAY_PIN, LOW);
       relayActivatedMillis = 0;
-      debugPrint("Relay_OFF_(timer expired)");
-      ackUDP("Relay OFF (timer expired)" + String(PIR_INTERVAL));
+      debugPrint("Relay OFF (timer expired)");
+      ackUDP("Relay_OFF_(timer expired)" + String(PIR_INTERVAL));
     }
   }
 }

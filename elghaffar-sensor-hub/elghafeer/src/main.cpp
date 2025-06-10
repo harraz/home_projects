@@ -26,7 +26,7 @@ const unsigned long RELAY_MAX_ON_DURATION = 120000; // 2 minutes
 const int PIR_PIN    = 2;  // D4
 const int RELAY_PIN  = 0;  // D3
 
-bool motionTriggered      = false;
+// bool motionTriggered      = false;
 unsigned long lastMillis  = 0;
 WiFiUDP    udp;
 IPAddress  lastClientIP;
@@ -101,7 +101,7 @@ void handleUDP() {
       digitalWrite(RELAY_PIN, LOW);
       ackUDP("Relay OFF");
     } else if (cmd == "REL_STATUS") {
-      ackUDP("Status: " + String(motionTriggered ? "ON" : "OFF"));
+      ackUDP("Relay Status: " + String((digitalRead(RELAY_PIN) == HIGH) ? "ON" : "OFF"));
     } else {
       ackUDP("Unknown CMD: " + cmd);
     }
@@ -119,11 +119,11 @@ void handleUDP() {
 }
 
 void handlePIR() {
-  bool motion = (digitalRead(PIR_PIN) == HIGH);
+  // bool motion = (digitalRead(PIR_PIN) == HIGH);
 
   // If motion is detected and relay is not ON, turn it ON and start the timer
-  if (motion && !motionTriggered) {
-    motionTriggered = true;
+  if (relayActivatedMillis == 0) {
+    // motionTriggered = true;
     digitalWrite(RELAY_PIN, HIGH);
     relayActivatedMillis = millis();
     debugPrint("Motion ON");
@@ -158,7 +158,7 @@ void handlePIR() {
 void checkRelayTimeout() {
   if (relayActivatedMillis > 0) {
     if (millis() - relayActivatedMillis >= RELAY_MAX_ON_DURATION) {
-      motionTriggered = false;
+      // motionTriggered = false;
       digitalWrite(RELAY_PIN, LOW);
       relayActivatedMillis = 0;
       debugPrint("Relay OFF (timer expired)");
@@ -252,8 +252,13 @@ void loop() {
 
   // handle PIR motion detection every PIR_INTERVAL milliseconds
   // This is a non-blocking check, it will not block the loop
+
   if (now - lastMillis >= PIR_INTERVAL) {
-    lastMillis = now;
-    handlePIR();
+    bool motion = (digitalRead(PIR_PIN) == HIGH);
+    if (motion) {
+      relayActivatedMillis = 0;
+      lastMillis = now;
+      handlePIR();
+    }
   }
 }

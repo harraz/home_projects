@@ -1,129 +1,54 @@
-import socket
+import paho.mqtt.client as mqtt
+import time
 import threading
-import logging
+import json
 
-# ------------------------------------------------------------------------
-LISTEN_IP     = "0.0.0.0"
-LISTEN_PORT   = 8080
-ACTUATOR_PORT = 12345
+# Configure relay details here
+RELAY_LOCATION = "garage"
+RELAY_MAC = "DC4F22112233"        # Replace with your relay ESP MAC (no :)
+RELAY_TIMEOUT = 15                # seconds relay stays ON
 
-# PER-STATION CONFIG
-STATION_CONFIG = {
-    "BASYOUNEE": {
-        "ip": "192.168.1.151",
-        "on_cmd": "REL_ON",
-        "off_cmd": "REL_OFF",
-        "off_delay": 15,
-    },
-    "ASHRAF": {
-        "ip": "192.168.1.197",
-        "on_cmd": "OPEN_VALVE",
-        "off_cmd": "CLOSE_VALVE",
-        "off_delay": 15,
-    },
-    "HAGRRAS": {
-        "ip": "192.168.1.0",
-        "on_cmd": "",
-        "off_cmd": "",
-        "off_delay": 15,
-    }
-}
-# ------------------------------------------------------------------------
+BROKER = "localhost"              # or use your Pi's LAN IP, e.g., "192.168.1.100"
 
-logging.basicConfig(level=logging.INFO,
-                    format="%(asctime)s %(levelname)s %(message)s")
-
-
-def parse_fields(text: str) -> dict:
-    data = {}
-    for chunk in text.strip().split():
-        if ':' not in chunk:
-            continue
-        key, val = chunk.split(':', 1)
-        data[key] = val
-    return data
-
-
-def send_cmd(ip: str, cmd: str):
-    """Send a single UDP command to the given actuator IP."""
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+def on_motion(client, userdata, msg):
     try:
-        sock.sendto(cmd.encode(), (ip, ACTUATOR_PORT))
-        logging.info("Sent '%s' to %s:%d", cmd, ip, ACTUATOR_PORT)
+        payload = msg.payload.decode()
+        print(f"[Motion] {msg.topic}: {payload}")
+
+        # Optionally, parse JSON payload
+        data = json.loads(payload)
+        # Decide which relay to control (expand logic if needed)
+
+        # Build relay cmd topic
+        relay_cmd_topic = f"home/{RELAY_LOCATION}/{RELAY_MAC}/cmd"
+
+        # Send REL_ON
+        print(f"[Relay] Sending REL_ON to {relay_cmd_topic}")
+        client.publish(relay_cmd_topic, "REL_ON")
+
+        # After RELAY_TIMEOUT, send REL_OFF (in a separate thread)
+        def delayed_off():
+            time.sleep(RELAY_TIMEOUT)
+            print(f"[Relay] Sending REL_OFF to {relay_cmd_topic}")
+            client.publish(relay_cmd_topic, "REL_OFF")
+        threading.Thread(target=delayed_off, daemon=True).start()
+
     except Exception as e:
-        logging.error("Failed to send '%s' to %s: %s", cmd, ip, e)
-    finally:
-        sock.close()
+        print(f"Error handling motion: {e}")
 
+def main():
+    client = mqtt.Client()
+    client.on_message = on_motion
 
-def handle_packet(raw: bytes, addr):
-    text   = raw.decode(errors='ignore')
-    fields = parse_fields(text)
+    print(f"Connecting to MQTT broker at {BROKER}...")
+    client.connect(BROKER, 1883, 60)
 
-    # Determine message type and station name
-    if "MD" in fields:
-        msg_type, station = "MD", fields["MD"]
-    elif "ACK" in fields:
-        msg_type, station = "ACK", fields["ACK"]
-    else:
-        logging.warning("Unknown message type from %s: %r", addr, text)
-        return
+    # Subscribe to all motion topics
+    motion_topic = "home/+/+/motion"
+    client.subscribe(motion_topic)
+    print(f"Subscribed to: {motion_topic}")
 
-    recv_ip = fields.get("IP")
-    tstamp  = fields.get("Time")
-
-    logging.info("Received %s from '%s' (IP=%s, Time=%s)",
-                 msg_type, station, recv_ip, tstamp)
-
-    config = STATION_CONFIG.get(station)
-    if not config:
-        logging.error("No config for station '%s'", station)
-        return
-
-    ip = config["ip"]
-
-    if msg_type == "MD":
-        on_cmd    = "CMD:" + config["on_cmd"]
-        off_cmd   = "CMD:" + config["off_cmd"]
-        off_delay = config["off_delay"]
-
-        # Log motion event
-        try:
-            if tstamp is not None:
-                ms = int(tstamp)
-                logging.info("Motion at '%s' (+%.2f s) dispatch ON", station, ms/1000.0)
-            else:
-                logging.info("Motion at '%s' (Time=%s) dispatch ON", station, tstamp)
-        except Exception:
-            logging.info("Motion at '%s' (Time=%s) dispatch ON", station, tstamp)
-
-        # send ON
-        send_cmd(ip, on_cmd)
-
-        # schedule OFF
-        timer = threading.Timer(off_delay, send_cmd, args=(ip, off_cmd))
-        timer.daemon = True
-        timer.start()
-
-    else:  # ACK
-        logging.info("ACK msg '%s' received from '%s'", fields, station)
-
-
-def listener():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((LISTEN_IP, LISTEN_PORT))
-    logging.info("Dispatcher listening on UDP %s:%d", LISTEN_IP, LISTEN_PORT)
-    while True:
-        data, addr = sock.recvfrom(1024)
-        threading.Thread(target=handle_packet,
-                         args=(data, addr),
-                         daemon=True).start()
-
+    client.loop_forever()
 
 if __name__ == "__main__":
-    try:
-        listener()
-    except KeyboardInterrupt:
-        logging.info("Shutting down.")
-
-
+    main()

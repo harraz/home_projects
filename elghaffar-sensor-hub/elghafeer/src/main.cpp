@@ -3,7 +3,7 @@
 #include "secrets.h"   // #define WIFI_SSID, WIFI_PASSWORD
 
 #define DEBUG 1  // or 0
-#define GHAFEER_NAME "BASYOUNEE" 
+#define GHAFEER_NAME "ASHRAF" 
 
 const int PIR_PIN    = 2;  // D4
 const int RELAY_PIN  = 0;  // D3
@@ -106,7 +106,7 @@ void handlePIR() {
       "\",\"ip\":\"" + WiFi.localIP().toString() +
       "\",\"time\":" + String(millis()) + "}";
     client.publish(motionTopic.c_str(), payload.c_str());
-    client.publish(statusTopic.c_str(), "Relay_ON (motion)");
+    client.publish(statusTopic.c_str(), "Relay_ON");
   }
 }
 

@@ -5,8 +5,7 @@ import json
 
 # Mapping: source ESP MAC -> list of (target location, target MAC, relay ON time)
 TRIGGERS = {
-    "112233AABBCC": [("garage", "AABBCCDDEEFF", 10)],  # example: hallway ESP triggers garage relay
-    "334455667788": [("livingroom", "112211221122", 15), ("garage", "AABBCCDDEEFF", 8)],
+    "BCDDC257015B": [("ASHRAF", "CC50E35334BA", 10)],  # example: hallway ESP triggers garage relay
     # add more mappings as needed
 }
 

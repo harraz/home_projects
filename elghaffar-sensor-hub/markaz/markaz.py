@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 import time
 import threading
 import json
+from datetime import datetime
 
 # Mapping: source ESP MAC -> list of (target location, target MAC, relay ON time)
 TRIGGERS = {
@@ -13,9 +14,12 @@ TRIGGERS = {
 BROKER = "localhost"  # or Pi IP
 
 def on_motion(client, userdata, msg):
+    
+    current_timestamp=(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
     try:
         payload = msg.payload.decode()
-        print(f"[Motion] {msg.topic}: {payload}")
+        print(f"{current_timestamp} - [Motion] {msg.topic}: {payload}")
         data = json.loads(payload)
         source_mac = data.get("mac", "")
 
@@ -25,12 +29,12 @@ def on_motion(client, userdata, msg):
 
         for target_location, target_mac, delay in TRIGGERS[source_mac]:
             relay_cmd_topic = f"home/{target_location}/{target_mac}/cmd"
-            print(f"[Relay] Sending REL_ON to {relay_cmd_topic}")
+            print(f"{current_timestamp} - [Relay] Sending REL_ON to {relay_cmd_topic}")
             client.publish(relay_cmd_topic, "REL_ON")
 
             def delayed_off(topic=relay_cmd_topic, delay=delay):
                 time.sleep(delay)
-                print(f"[Relay] Sending REL_OFF to {topic}")
+                print(f"{current_timestamp} - [Relay] Sending REL_OFF to {topic}")
                 client.publish(topic, "REL_OFF")
             threading.Thread(target=delayed_off, daemon=True).start()
 

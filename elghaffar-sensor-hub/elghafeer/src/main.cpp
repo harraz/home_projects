@@ -2,7 +2,7 @@
 #include <PubSubClient.h>
 #include "secrets.h"   // #define WIFI_SSID, WIFI_PASSWORD
 
-#define DEBUG 1  // or 0
+#define DEBUG 0  // or 0
 #define GHAFEER_NAME "ASHRAF" 
 
 const int PIR_PIN    = 2;  // D4

@@ -2,8 +2,8 @@
 #include <PubSubClient.h>
 #include "secrets.h"   // #define WIFI_SSID, WIFI_PASSWORD
 
-#define DEBUG 0  // or 0
-#define GHAFEER_NAME "ASHRAF" 
+#define DEBUG 1  // or 0
+#define GHAFEER_NAME "HAGRRAS" 
 
 const int PIR_PIN    = 2;  // D4
 const int RELAY_PIN  = 0;  // D3
@@ -60,11 +60,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
   debugPrint("MQTT cmd: " + cmd);
 
   if (cmd == "REL_ON") {
+    if (SKIP_LOCAL_RELAY) {
+      debugPrint("Skipping local relay activation due to SKIP_LOCAL_RELAY setting");
+      client.publish(statusTopic.c_str(), "SKIP_LOCAL_RELAY is enabled, not activating relay locally");
+      return;
+    }
     digitalWrite(RELAY_PIN, HIGH);
     relayActivatedMillis = millis();
     client.publish(statusTopic.c_str(), "Relay_ON");
   }
   else if (cmd == "REL_OFF") {
+    if (SKIP_LOCAL_RELAY) {
+      debugPrint("Skipping local relay deactivation due to SKIP_LOCAL_RELAY setting");
+      client.publish(statusTopic.c_str(), "SKIP_LOCAL_RELAY is enabled, not deactivating relay locally");
+      return;
+    }
     digitalWrite(RELAY_PIN, LOW);
     relayActivatedMillis = 0;
     client.publish(statusTopic.c_str(), "Relay_OFF");
@@ -97,7 +107,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
     ESP.restart();
   }
   else if (cmd == "STATUS") {
-    String info = "Device_Status:Online,MAC:" + mac + ",IP:" + WiFi.localIP().toString();
+    String info = "GHAFEER_NAME:" + String(GHAFEER_NAME) + ",Device_Status:Online,MAC:" 
+                  + mac + ",IP:" + WiFi.localIP().toString() + ",SKIP_LOCAL_RELAY:" + SKIP_LOCAL_RELAY;
     client.publish(statusTopic.c_str(), info.c_str());
   }
   else {
@@ -140,7 +151,12 @@ void handlePIR() {
       "\",\"ip\":\"" + WiFi.localIP().toString() +
       "\",\"time\":" + String(millis()) + "}";
     client.publish(motionTopic.c_str(), payload.c_str());
-    client.publish(statusTopic.c_str(), "Relay_ON");
+    if (SKIP_LOCAL_RELAY) {
+      client.publish(statusTopic.c_str(), "Motion detected, but SKIP_LOCAL_RELAY is enabled, not activating relay locally");
+    } else {
+      client.publish(statusTopic.c_str(), "Motion detected, relay activated");
+    }
+    // client.publish(statusTopic.c_str(), "Relay_ON");
   }
 }
 

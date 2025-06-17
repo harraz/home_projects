@@ -3,13 +3,16 @@
 #include "secrets.h"   // #define WIFI_SSID, WIFI_PASSWORD
 
 #define DEBUG 1  // or 0
-#define GHAFEER_NAME "BASYOUNEE" 
+#define GHAFEER_NAME "HAGRRAS" 
 
 const int PIR_PIN    = 2;  // D4
 const int RELAY_PIN  = 0;  // D3
 
 unsigned long PIR_INTERVAL = 60000; // ms (default, can change via MQTT)
 const unsigned long RELAY_MAX_ON_DURATION = 120000; // ms
+bool SKIP_LOCAL_RELAY = true; // true to use local relay control, false to control other devices via MQTT
+// Note: SKIP_LOCAL_RELAY is used to skip local relay activation when motion is detected
+// and the device is configured to control the relay via MQTT only.
 
 unsigned long lastMillis = 0;
 unsigned long relayActivatedMillis = 0;
@@ -57,11 +60,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
   debugPrint("MQTT cmd: " + cmd);
 
   if (cmd == "REL_ON") {
+    if (SKIP_LOCAL_RELAY) {
+      debugPrint("Skipping local relay activation due to SKIP_LOCAL_RELAY setting");
+      client.publish(statusTopic.c_str(), "SKIP_LOCAL_RELAY is enabled, not activating relay locally");
+      return;
+    }
     digitalWrite(RELAY_PIN, HIGH);
     relayActivatedMillis = millis();
     client.publish(statusTopic.c_str(), "Relay_ON");
   }
   else if (cmd == "REL_OFF") {
+    if (SKIP_LOCAL_RELAY) {
+      debugPrint("Skipping local relay deactivation due to SKIP_LOCAL_RELAY setting");
+      client.publish(statusTopic.c_str(), "SKIP_LOCAL_RELAY is enabled, not deactivating relay locally");
+      return;
+    }
     digitalWrite(RELAY_PIN, LOW);
     relayActivatedMillis = 0;
     client.publish(statusTopic.c_str(), "Relay_OFF");
@@ -73,6 +86,29 @@ void callback(char* topic, byte* payload, unsigned int length) {
   else if (cmd.startsWith("PIR_INTERVAL:")) {
     PIR_INTERVAL = cmd.substring(13).toInt();
     String info = "PIR_INTERVAL_set:" + String(PIR_INTERVAL);
+    client.publish(statusTopic.c_str(), info.c_str());
+  } 
+  else if (cmd.startsWith("SKIP_LOCAL_RELAY:")) {
+    String value = cmd.substring(17);
+    if (value == "true" || value == "1") {
+      SKIP_LOCAL_RELAY = true;
+      client.publish(statusTopic.c_str(), "SKIP_LOCAL_RELAY set to true");
+    } else if (value == "false" || value == "0") {
+      SKIP_LOCAL_RELAY = false;
+      client.publish(statusTopic.c_str(), "SKIP_LOCAL_RELAY set to false");
+    } else {
+      client.publish(statusTopic.c_str(), "Invalid SKIP_LOCAL_RELAY value");
+    }
+
+  }
+  else if (cmd == "REBOOT") {
+    client.publish(statusTopic.c_str(), "Rebooting...");
+    delay(1000);
+    ESP.restart();
+  }
+  else if (cmd == "STATUS") {
+    String info = "GHAFEER_NAME:" + String(GHAFEER_NAME) + ",Device_Status:Online,MAC:" 
+                  + mac + ",IP:" + WiFi.localIP().toString() + ",SKIP_LOCAL_RELAY:" + SKIP_LOCAL_RELAY;
     client.publish(statusTopic.c_str(), info.c_str());
   }
   else {
@@ -97,16 +133,30 @@ void reconnect() {
 
 void handlePIR() {
   if (relayActivatedMillis == 0) {
-    digitalWrite(RELAY_PIN, HIGH);
-    relayActivatedMillis = millis();
-    debugPrint("Motion ON, relay ON");
+    
+    relayActivatedMillis = millis(); // Reset the timer when motion is detected
+
+    if (!SKIP_LOCAL_RELAY) {
+      digitalWrite(RELAY_PIN, HIGH);
+      debugPrint("Motion ON, relay ON (local control)");
+    } else {
+      debugPrint("Motion detected, but SKIP_LOCAL_RELAY is enabled, not activating relay locally");
+    }
+    // digitalWrite(RELAY_PIN, HIGH);
+    // debugPrint("Motion ON, relay ON");
+
     // Publish motion detection as JSON
     String payload = "{\"motion\":true,\"mac\":\"" + mac +
       "\",\"location\":\"" + String(GHAFEER_NAME) +
       "\",\"ip\":\"" + WiFi.localIP().toString() +
       "\",\"time\":" + String(millis()) + "}";
     client.publish(motionTopic.c_str(), payload.c_str());
-    client.publish(statusTopic.c_str(), "Relay_ON");
+    if (SKIP_LOCAL_RELAY) {
+      client.publish(statusTopic.c_str(), "Motion detected, but SKIP_LOCAL_RELAY is enabled, not activating relay locally");
+    } else {
+      client.publish(statusTopic.c_str(), "Motion detected, relay activated");
+    }
+    // client.publish(statusTopic.c_str(), "Relay_ON");
   }
 }
 

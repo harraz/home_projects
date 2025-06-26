@@ -6,8 +6,8 @@ from datetime import datetime
 
 # Mapping: source ESP MAC -> list of (target location, target MAC, relay ON time)
 TRIGGERS = {
-    "BCDDC257015B": [("ASHRAF", "CC50E35334BA", 10)], # /BASYOUNEE>ASHRAF
-    "CC50E35334BA": [("ABBAS", "483FDA5CC67A", 30)], # /ASHRAF>ABBAS
+    "BCDDC257015B": [("ASHRAF", "CC50E35334BA", 40)], # /BASYOUNEE>ASHRAF
+    "CC50E35334BA": [("MARZOOQ", "BCDDC23DD032", 30)], # /ASHRAF>MARZOOQ
     "84F3EB4F23C2": [("ASHRAF", "CC50E35334BA", 30)], # /HAGRRAS>ASHRAF
     
     # add more mappings as needed

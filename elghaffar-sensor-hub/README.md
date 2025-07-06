@@ -54,6 +54,35 @@ This network is reliable, modular, and scalable — suitable for outdoor automat
 > **Power Notes:** Ensure each device has a reliable 3.3V supply (>250mA). Use external regulators for solenoids/relays.
 
 ---
+## Circuit Diagrams
+
+This repository now includes detailed circuit documentation for the sensor hub hardware:
+
+### 📈 Circuit Diagram (SVG)
+
+The latest wiring diagram for the sensor hub is provided as an SVG, which you can view directly in your browser for clarity and easy zooming:
+
+[![Circuit Diagram](./circuit-20250626-0201.svg)](./circuit-20250626-0201.svg)
+
+[View circuit-20250626-0201.svg directly](./circuit-20250626-0201.svg)
+
+---
+
+### 🧩 Falstad Simulation File
+
+To interactively simulate or modify the circuit, you can use the Falstad Circuit Simulator. The file below can be loaded at [falstad.com/circuit/](https://falstad.com/circuit/) via File > Import:
+
+- [`circuitjs-20250626-020027.txt`](./circuitjs-20250626-020027.txt)
+
+**How to use:**
+1. Visit [falstad.com/circuit/](https://falstad.com/circuit/)
+2. Open the simulator's menu, choose "File" > "Import"
+3. Paste the contents of `circuitjs-20250626-020027.txt`, or upload the file
+
+---
+
+**Both files are located in the [`elghaffar-sensor-hub`](./) directory.**
+
 
 ## 📡 MQTT Setup
 

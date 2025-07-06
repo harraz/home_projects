@@ -213,15 +213,22 @@ SKIP_LOCAL_RELAY:false
 
 ## 📁 Project Structure
 
-main.ino               — ESP8266 Arduino code  
-secrets.h              — Wi-Fi credentials  
-README.md              — This documentation  
+The project follows standard **PlatformIO** structure:
 
+```
+elghaffar-sensor-hub/
+├── markaz/              # Python dispatcher code using Paho MQTT
+├── src/                 # C++ source code for ESP8266 devices
+│   ├── main.cpp         # Main firmware logic
+│   └── other files...  
+├── include/             # Header files
+├── platformio.ini       # PlatformIO project configuration
+└── README.md            # Project documentation
+```
 ---
 
 ## 🧯 Reliability Tips
 
-- Use `INPUT_PULLUP` for PIR pin
 - Add capacitor near relay power line to prevent brownouts
 - Secure waterproof enclosures for outdoor use
 - Add watchdog timer for unresponsive devices
@@ -230,10 +237,12 @@ README.md              — This documentation
 
 ## 🧰 Requirements
 
-- Arduino IDE or PlatformIO
-- Libraries:
+- **PlatformIO** (Recommended)
+- Libraries managed through PlatformIO `platformio.ini`:
   - ESP8266WiFi
   - PubSubClient
+
+> ℹ️ This project is intended for use with **PlatformIO**, not the Arduino IDE. The source code is organized in `.cpp` and `.h` files following PlatformIO conventions.
 
 ---
 

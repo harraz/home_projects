@@ -8,6 +8,9 @@
 
   If you need standard (active-high) relay logic, revert these changes.
 */
+
+#define MQTT_MAX_PACKET_SIZE 512
+
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include "secrets.h"   // #define WIFI_SSID, WIFI_PASSWORD
@@ -147,20 +150,20 @@ void callback(char* topic, byte* payload, unsigned int length) {
       client.publish(statusTopic.c_str(), "Invalid GHAFEER_NAME value");
     }
   }
-  else if (cmd == "HELP") {
-    String helpMsg = "{";
-    helpMsg += "\"commands\":[";
-    helpMsg += "{\"cmd\":\"REL_ON\",\"desc\":\"Turn relay ON\"},";
-    helpMsg += "{\"cmd\":\"REL_OFF\",\"desc\":\"Turn relay OFF\"},";
-    helpMsg += "{\"cmd\":\"REL_STATUS\",\"desc\":\"Get relay status\"},";
-    helpMsg += "{\"cmd\":\"PIR_INTERVAL:<value>\",\"desc\":\"Set PIR interval in ms\"},";
-    helpMsg += "{\"cmd\":\"SKIP_LOCAL_RELAY:<true/false>\",\"desc\":\"Enable/disable local relay control\"},";
-    helpMsg += "{\"cmd\":\"RESTART\",\"desc\":\"Restart the device\"},";
-    helpMsg += "{\"cmd\":\"REBOOT\",\"desc\":\"Reboot the device\"},";
-    helpMsg += "{\"cmd\":\"STATUS\",\"desc\":\"Get device status\"},";
-    helpMsg += "{\"cmd\":\"DEBUG:<true/false>\",\"desc\":\"Enable/disable debug mode\"},";
-    helpMsg += "{\"cmd\":\"GHAFEER_NAME:<name>\",\"desc\":\"Set GHAFEER name\"}";
-    helpMsg += "]}";
+  else if (cmd == "INFO" || cmd == "HELP") {
+    String helpMsg = 
+      "REL_ON:Relay ON | "
+      "REL_OFF:Relay OFF | "
+      "REL_STATUS:Get relay status | "
+      "PIR_INTERVAL:<ms>:Set PIR interval | "
+      "SKIP_LOCAL_RELAY:<true/false>:Local relay control | "
+      "SKIP_LOCAL_PIR:<true/false>:Local PIR relay | "
+      "RESTART:Restart | "
+      "REBOOT:Reboot | "
+      "STATUS:Device status | "
+      "DEBUG:<true/false>:Debug mode | "
+      "GHAFEER_NAME:<name>:Set name | "
+      "HELP:Show help";
     client.publish(statusTopic.c_str(), helpMsg.c_str());
   }
 

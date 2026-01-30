@@ -10,14 +10,15 @@
 JsonDocument doc;
 
 const int RELAY_PIN  = 12;  // D6
+const int CAMERA_PIN  = 13;  // D6
 
-String GHAFEER_NAME = "ABBAS";
+String GHAFEER_NAME = "HAGGRAS";
 bool relayOn = false;
 unsigned long lastRelayOnMs = 0;
 bool DEBUG = false;
 
 unsigned int RELAY_ON_DURATION_MS = 3000;   // how long relay stays ON
-const unsigned long AWAKE_WINDOW_MS      = 18000;   // total time awake before sleep
+const unsigned long AWAKE_WINDOW_MS      = 28000;   // total time awake before sleep
 const unsigned long WIFI_CONNECT_TIMEOUT_MS = 15000;
 const unsigned long MQTT_CONNECT_TIMEOUT_MS = 8000;
 const char* MQTT_SERVER = "192.168.1.246";
@@ -90,6 +91,10 @@ void goToSleep(bool publishStatus = true) {
     WiFi.disconnect(true);
   }
   debugPrint("Sleeping...");
+
+// turn off camera power
+  digitalWrite(CAMERA_PIN, LOW);
+  
   delay(2000);  // wait 2s to let PIR output go LOW
   ESP.deepSleep(0);   // forever, until RST triggered (PIR)
 }
@@ -146,6 +151,10 @@ void setup() {
   relayOn = true;
   lastRelayOnMs = millis();
   client.publish(statusTopic.c_str(), "Relay ON (local motion trigger)");
+
+  // turn on camera power
+  pinMode(CAMERA_PIN, OUTPUT);
+  digitalWrite(CAMERA_PIN, HIGH);
 
   while (millis() - start < AWAKE_WINDOW_MS) {
     client.loop();

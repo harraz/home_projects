@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <ESP8266HTTPClient.h>
 #include "secrets.h"   // WIFI_SSID, WIFI_PASSWORD
 
 #include <stdio.h>
@@ -18,7 +19,7 @@ unsigned long lastRelayOnMs = 0;
 bool DEBUG = false;
 
 unsigned int RELAY_ON_DURATION_MS = 3000;   // how long relay stays ON
-const unsigned long AWAKE_WINDOW_MS      = 28000;   // total time awake before sleep
+const unsigned long AWAKE_WINDOW_MS      = 48000;   // total time awake before sleep
 const unsigned long WIFI_CONNECT_TIMEOUT_MS = 15000;
 const unsigned long MQTT_CONNECT_TIMEOUT_MS = 8000;
 const char* MQTT_SERVER = "192.168.1.246";
@@ -26,6 +27,7 @@ const int   MQTT_PORT   = 1883;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+HTTPClient http;
 
 String mac;
 String statusTopic;
@@ -155,6 +157,10 @@ void setup() {
   // turn on camera power
   pinMode(CAMERA_PIN, OUTPUT);
   digitalWrite(CAMERA_PIN, HIGH);
+
+  http.begin(espClient, "http://192.168.1.176/flash_on");
+  http.GET();
+  http.end();
 
   while (millis() - start < AWAKE_WINDOW_MS) {
     client.loop();
